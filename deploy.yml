@@ -1,0 +1,79 @@
+n:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  # JOB 1 : vérifier le code HTML
+  lint:
+    name: Lint HTML
+    runs-on: ubuntu-latest
+
+    steps:
+      # Récupération du code source
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Installation de Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Vérification du HTML
+      - name: Lint HTML
+        run: npx --yes html-validate index.html
+
+
+  # JOB 2 : déployer sur GitHub Pages
+  deploy:
+    name: Deploy to GitHub Pages
+
+    # Attendre la réussite du lint
+    needs: lint
+
+    # Ne pas déployer lors d'une pull request
+    if: github.event_name != 'pull_request'
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # Récupération du code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Configuration de GitHub Pages
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      # Préparation des fichiers à publier
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      # Déploiement
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+

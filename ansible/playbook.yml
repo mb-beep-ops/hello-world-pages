@@ -1,0 +1,41 @@
+---
+- name: Deploy Hello World with Nginx
+  hosts: webservers
+  become: true
+
+  tasks:
+
+    # 1. Installer Nginx
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    # 2. Démarrer Nginx
+    - name: Start and enable Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    # 3. Copier notre page HTML
+    - name: Deploy Hello World page
+      ansible.builtin.copy:
+        src: ../index.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: "0644"
+
+    # 4. Vérifier que Nginx répond
+    - name: Check Nginx HTTP response
+      ansible.builtin.uri:
+        url: http://localhost
+        status_code: 200
+
+    # 5. Afficher un message de succès
+    - name: Display deployment result
+      ansible.builtin.debug:
+        msg: "Hello World deployed successfully with Nginx!"
+
